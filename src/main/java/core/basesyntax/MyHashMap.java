@@ -3,32 +3,37 @@ package core.basesyntax;
 import java.util.Arrays;
 
 public class MyHashMap<K, V> implements MyMap<K, V> {
-
-    // TODO: Resize logic!!!
     private static final int DEFAULT_CAPACITY = 16;
     private static final float LOAD_FACTOR = 0.75f;
-
-    private Node<K,V>[] table;
-    private int size; // Количество Нод елементов (количество ключ пара значения)
-    private int threshold; // порог дает знать когда ресайзить table
+    private static final int MAXIMUM_CAPACITY = 2131233211;
+    private Node<K, V>[] table;
+    private int size;
+    private int threshold;
 
     @SuppressWarnings("unchecked")
     public MyHashMap() {
-        this.table = (Node<K,V>[]) new Node[16];
+        this.table = (Node<K, V>[]) new Node[DEFAULT_CAPACITY];
+        this.threshold = (int)(DEFAULT_CAPACITY * LOAD_FACTOR);
     }
 
     @Override
     public void put(K key, V value) {
-        int index = hash(key);
-        Node<K,V> current = table[index];
-        if (table[index] == null) {
-            table[index] = new Node<>(key,value);
+        if (size > threshold) {
+            resize();
+        }
+
+        int index = hash(key) % table.length;
+        Node<K, V> current = table[index];
+
+        if (current == null) {
+            table[index] = new Node<>(key, value);
             size++;
             return;
         }
 
-        while (current != null) {
-            if (current.key.equals(key)) {
+        while (true) {
+            if ((key == null && current.key == null)
+                    || (key != null && key.equals(current.key))) {
                 current.value = value;
                 return;
             }
@@ -40,14 +45,20 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
             }
             current = current.next;
         }
-
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public V getValue(K key) {
-
-        return table[hash(key)].getValue();
+        int index = hash(key) % table.length;
+        Node<K, V> current = table[index];
+        while (current != null) {
+            if ((key == null && current.key == null)
+                    || (key != null && key.equals(current.key))) {
+                return current.value;
+            }
+            current = current.next;
+        }
+        return null;
     }
 
     @Override
@@ -55,30 +66,51 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
         return size;
     }
 
-    // Індекс куда треба поставити значення
     private int hash(K key) {
-        int hash;
-        return (key == null) ? 0 : (hash = key.hashCode() % DEFAULT_CAPACITY);
+        return (key == null) ? 0 : Math.abs(key.hashCode());
     }
 
-    static class Node<K,V> {
-        private Node<K,V> next;
-        private K key;
+    private void resize() {
+        int oldCapacity = table.length;
+        int newCapacity = oldCapacity * 2;
+        if (newCapacity > MAXIMUM_CAPACITY) {
+            newCapacity = MAXIMUM_CAPACITY;
+        }
+
+        @SuppressWarnings("unchecked")
+        Node<K, V>[] newTable = (Node<K, V>[]) new Node[newCapacity];
+        transfer(table, newTable);
+        table = newTable;
+        threshold = (int)(newCapacity * LOAD_FACTOR);
+    }
+
+    private void transfer(Node<K, V>[] oldTable, Node<K, V>[] newTable) {
+        for (Node<K, V> node : oldTable) {
+            while (node != null) {
+                Node<K, V> next = node.next;
+                int newIndex = hash(node.key) % newTable.length;
+
+                node.next = newTable[newIndex];
+                newTable[newIndex] = node;
+
+                node = next;
+            }
+        }
+    }
+
+    private static class Node<K, V> {
+        private Node<K, V> next;
+        private final K key;
         private V value;
-        private int hash;
 
         public Node(K key, V value) {
             this.key = key;
             this.value = value;
         }
 
-        public V getValue() {
-            return value;
-        }
-
         @Override
         public String toString() {
-            return (String) value;
+            return String.valueOf(value);
         }
     }
 
@@ -86,10 +118,8 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
     public String toString() {
         return "MyHashMap{"
                 + "table=" + Arrays.toString(table)
-                + ", size="
-                + size
-                + ", threshold="
-                + threshold
+                + ", size=" + size
+                + ", threshold=" + threshold
                 + '}';
     }
 }
