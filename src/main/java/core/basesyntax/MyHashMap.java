@@ -6,6 +6,7 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
     private static final int DEFAULT_CAPACITY = 16;
     private static final float LOAD_FACTOR = 0.75f;
     private static final int MAXIMUM_CAPACITY = 2131233211;
+    private static final int RESIZE_FACTOR = 2;
     private Node<K, V>[] table;
     private int size;
     private int threshold;
@@ -18,7 +19,7 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
 
     @Override
     public void put(K key, V value) {
-        if (size > threshold) {
+        if (size >= threshold) {
             resize();
         }
 
@@ -66,13 +67,22 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
         return size;
     }
 
+    @Override
+    public String toString() {
+        return "MyHashMap{"
+                + "table=" + Arrays.toString(table)
+                + ", size=" + size
+                + ", threshold=" + threshold
+                + '}';
+    }
+
     private int hash(K key) {
-        return (key == null) ? 0 : Math.abs(key.hashCode());
+        return (key == null) ? 0 : key.hashCode() & 0x7FFFFFFF;
     }
 
     private void resize() {
         int oldCapacity = table.length;
-        int newCapacity = oldCapacity * 2;
+        int newCapacity = oldCapacity * RESIZE_FACTOR;
         if (newCapacity > MAXIMUM_CAPACITY) {
             newCapacity = MAXIMUM_CAPACITY;
         }
@@ -112,14 +122,5 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
         public String toString() {
             return String.valueOf(value);
         }
-    }
-
-    @Override
-    public String toString() {
-        return "MyHashMap{"
-                + "table=" + Arrays.toString(table)
-                + ", size=" + size
-                + ", threshold=" + threshold
-                + '}';
     }
 }
