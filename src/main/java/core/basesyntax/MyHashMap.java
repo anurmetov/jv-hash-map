@@ -7,6 +7,7 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
     private static final float LOAD_FACTOR = 0.75f;
     private static final int MAXIMUM_CAPACITY = 2131233211;
     private static final int RESIZE_FACTOR = 2;
+    private static final int HASH_MASK = 0x7FFFFFFF;
     private Node<K, V>[] table;
     private int size;
     private int threshold;
@@ -73,7 +74,7 @@ public class MyHashMap<K, V> implements MyMap<K, V> {
     }
 
     private int hash(K key) {
-        return (key == null) ? 0 : key.hashCode() & 0x7FFFFFFF;
+        return (key == null) ? 0 : key.hashCode() & HASH_MASK;
     }
 
     private void resize() {
